@@ -1,0 +1,208 @@
+﻿QWidget
+{
+    font: 9pt "微软雅黑";
+}
+QWidget:focus
+{
+    outline: none; /*去掉选中时的虚线边框*/
+}
+
+QWidget[Background="true"]
+{
+    background-color: #fefefe;
+}
+
+QWidget#widgetTitle
+{
+    max-height: 2em;
+    font: 10pt "微软雅黑";
+}
+
+QWidget#widgetDynamicInfo
+{
+    border: 1px solid #000000;
+    border-radius: 0.6em;
+    background-color: #000000;
+}
+
+/* QLabel */
+QLabel#lbLogo
+{
+    min-height: 1.2em;
+    max-height: 1.2em;
+    min-width: 1.2em;
+    max-width: 1.2em;
+}
+
+QLabel[VideoTitle="true"]
+{
+    font: 8pt "微软雅黑";
+    color: #f0f0f0;
+}
+
+/* QPushButton */
+QPushButton[Ok="true"]
+{
+    min-height: 1.5em;
+    border: 1px solid #b3d8ff;
+    border-radius: 2px;
+    padding-left: 1em;
+    padding-right: 1em;
+    color: #fefefe;
+    background-color: #409eff;
+}
+
+QPushButton[Ok="true"]:hover
+{
+    background-color: #66b1ff;
+}
+
+QPushButton[Ok="true"]:pressed
+{
+    background-color: #409eff;
+}
+
+QPushButton[Ok="true"]:!enabled
+{
+    background-color: #444444;
+}
+
+QPushButton[Cancel="true"]
+{
+    min-height: 1.5em;
+    border: 1px solid #dcdfe6;
+    border-radius: 2px;
+    padding-left: 1em;
+    padding-right: 1em;
+    color: #666666;
+    background-color: #f3f4f5;
+}
+
+QPushButton[Cancel="true"]:hover
+{
+    background-color: #fefefe;
+}
+
+QPushButton[Cancel="true"]:pressed
+{
+    background-color: #f3f4f5;
+}
+
+QPushButton[Cancel="true"]:!enabled
+{
+    background-color: #444444;
+}
+
+QPushButton[MenuButton="true"]
+{
+    min-height: 0.8em;
+    max-height: 0.8em;
+    min-width: 0.8em;
+    max-width: 0.8em;
+}
+
+QPushButton[ControlButton="true"]
+{
+    min-height: 1.8em;
+    max-height: 1.8em;
+    min-width: 1.8em;
+    max-width: 1.8em;
+}
+
+QPushButton#btnOpen
+{
+    min-width: 16em;
+    min-height: 3.6em;
+    background-color: #5e78fd;
+    border: none;
+    color: #fefefe;
+    border-radius: 0.2em;
+}
+
+QPushButton#btnOpen:hover
+{
+    background-color: #758bfb;
+}
+
+QPushButton#btnOpen:pressed
+{
+    background-color: #5e78fd;
+}
+
+
+QPushButton#btnOpenVideos
+{
+    min-height: 3.2em;
+    background-color: #5e78fd;
+    border: none;
+    color: #fefefe;
+    border-radius: 0.2em;
+}
+
+/* QLineEdit */
+QLineEdit
+{
+    border: 1px solid #e0e0e0;
+    padding-left: 0.2em;
+    border-radius: 0.16em;
+    color: #666666;
+}
+
+QLineEdit:hover
+{
+    border: 1px solid #eeeeee;
+}
+
+QLineEdit:focus
+{
+    border: 1px solid #cccccc;
+}
+
+/* QSlider */
+QSlider
+{
+    border: none;
+    min-height: 1.2em;
+    min-width: 4.8em;
+    background-color: transparent;
+}
+
+QSlider::groove:horizontal
+{
+    border: none;
+    height: 0.24em;
+    border-radius: 0.12em;
+    margin: 0px 0px;
+    left: 0.5em;
+    right: 0.5em;
+}
+
+QSlider::handle:horizontal
+{
+    border: none;
+    background-color: #fefefe;
+    width: 1.2em;
+    margin: -0.48em;
+    border-radius: 0.6em;
+}
+
+QSlider::handle:horizontal[sliderVolume="true"]
+{
+    border: none;
+    background-color: #fefefe;
+    width: 1.0em;
+    margin: -0.38em;
+    border-radius: 0.48em;
+}
+
+QSlider::add-page:horizontal
+{
+    border-radius: 0.12em;
+    background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 #33bcbcbc, stop:0.25 #33bcbcbc, stop:0.5 #33bcbcbc, stop:1 #33bcbcbc);
+}
+
+QSlider::sub-page:horizontal
+{
+    border-radius: 0.12em;
+    background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 #439cf3, stop:0.25 #439cf3, stop:0.5 #439cf3, stop:1 #439cf3);
+}
