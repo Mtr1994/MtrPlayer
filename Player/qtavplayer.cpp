@@ -237,6 +237,8 @@ void QtAvPlayer::clear()
     mPauseTimeSpace = 0;
     mStartTime = 0;
     mSeekPts = 0;
+    mVideoStartPts = -1;
+    mAudioStartPts = -1;
 
     std::unique_lock<std::mutex> lock(mMutexClose);
     mCvClose.wait(lock, [this]{return mVideoPlayStop && mAudioPlayStop && mParseStop;});
