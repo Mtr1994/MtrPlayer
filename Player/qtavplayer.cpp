@@ -70,7 +70,7 @@ void QtAvPlayer::seek(int32_t pts)
 {
     if (mParseStop) return;
 
-    mSeekPts = pts;
+    mSeekPts = pts + (mVideoStartPts > 0 ? mVideoStartPts : 0);
     mCvPause.notify_all();
 }
 
@@ -432,6 +432,8 @@ void QtAvPlayer::parse(const std::string& path)
                     }
 
                     frame->pts = frame->best_effort_timestamp;
+                    // 记录第一帧图像的 PTS
+                    if (mVideoStartPts < 0) mVideoStartPts = frame->pts;
                     if (!headFrame)
                     {
                         mPlayTime = getCurrentMillisecond();
@@ -456,7 +458,7 @@ void QtAvPlayer::parse(const std::string& path)
                     {
                         VideoFrame video =
                         {
-                            frame->pts,
+                            frame->pts - mVideoStartPts,
                             mSeekVideo,
                             pixWidth,
                             pixHeight,
@@ -469,7 +471,7 @@ void QtAvPlayer::parse(const std::string& path)
 
                         if (mSeekVideo)
                         {
-                            mStartTime = frame->pts * video.timebase * 1000;
+                            mStartTime = (frame->pts - mVideoStartPts) * video.timebase * 1000;
                             mPlayTime = getCurrentMillisecond();
                             if (mPlayStatus == MediaPlaying)
                             {
@@ -523,6 +525,8 @@ void QtAvPlayer::parse(const std::string& path)
                     }
 
                     frame->pts = frame->best_effort_timestamp;
+                    // 记录第一帧图像的 PTS
+                    if (mAudioStartPts < 0) mAudioStartPts = frame->pts;
                     if (frame->pts == 0)
                     {
                         mPlayTime = getCurrentMillisecond();
@@ -538,7 +542,7 @@ void QtAvPlayer::parse(const std::string& path)
                     {
                        AudioFrame audio =
                         {
-                            frame->pts,
+                            frame->pts - mAudioStartPts,
                             mSeekAudio,
                             bufsize,
                             (double)codeCtxAudio->pkt_timebase.num / codeCtxAudio->pkt_timebase.den,

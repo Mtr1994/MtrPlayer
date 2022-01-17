@@ -102,6 +102,9 @@ private:
     uint8_t* mDataU = nullptr;
     uint8_t* mDataV = nullptr;
 
+    int64_t mVideoStartPts = -1;
+    int64_t mAudioStartPts = -1;
+
     int64_t mPlayTime = 0;  // 视频播放系统时间
     int64_t mStartTime = 0; // 视频播放起始视频时间
     int64_t mPauseTime = 0;
