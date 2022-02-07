@@ -39,6 +39,8 @@ void QtAvPlayer::play(const std::string &path)
 
     mPlayStatus = MediaPlaying;
 
+    // rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov
+
     auto func1 = std::bind(&QtAvPlayer::parse, this, std::placeholders::_1);
     std::thread th1(func1, path);
     th1.detach();
@@ -293,6 +295,12 @@ void QtAvPlayer::parse(const std::string& path)
     const AVCodec* pCodecVideo = nullptr;
     const AVCodec* pCodecAudio = nullptr;
     int ret = 0;
+
+    // 网络播放初始化
+    if (QString::fromStdString(path).startsWith("rtsp"))
+    {
+        avformat_network_init();
+    }
 
     //打开文件，解封文件头
     ret = avformat_open_input(&formatCtx, path.c_str(), 0, 0);
