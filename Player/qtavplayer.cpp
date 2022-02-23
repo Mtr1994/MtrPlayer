@@ -608,6 +608,7 @@ void QtAvPlayer::playVideo()
         if ((mPlayStatus == MediaNone) || ((mPlayStatus == MediaClose) && mQueueVideo.empty())) break;
 
         VideoFrame frame;
+        if (mQueueVideo.empty()) continue;
         mQueueVideo.wait_and_pop(frame);
 
         int64_t currentTime = getCurrentMillisecond();
@@ -688,6 +689,7 @@ void QtAvPlayer::playAudio()
         if ((mPlayStatus == MediaNone) || ((mPlayStatus == MediaClose) && mQueueAudio.empty())) break;
 
         AudioFrame frame;
+        if (mQueueAudio.empty()) continue;
         mQueueAudio.wait_and_pop(frame);
 
         int64_t currentTime = getCurrentMillisecond();
