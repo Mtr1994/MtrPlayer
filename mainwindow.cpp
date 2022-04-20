@@ -18,8 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     init();
 
-    setWindowTitle("中国科学院深海科学与工程研究所-潜器视频播放系统");
-
     setWindowFlags(Qt::CustomizeWindowHint);
 }
 
