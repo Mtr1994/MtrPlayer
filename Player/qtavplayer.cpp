@@ -3,21 +3,24 @@
 
 extern "C"
 {
-    #include <libavcodec/avcodec.h>
-    #include <libavformat/avformat.h>
-    #include <libavfilter/buffersink.h>
-    #include <libavfilter/buffersrc.h>
-    #include <libavutil/opt.h>
-    #include "libswscale/swscale.h"
-    #include "libswresample/swresample.h"
-    #include "libavutil/opt.h"
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
+#include <libavutil/opt.h>
+#include "libswscale/swscale.h"
+#include "libswresample/swresample.h"
+#include "libavutil/opt.h"
 }
+
 
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QIODevice>
 #include <QPainter>
 #include <thread>
+#include <chrono>
+
 
 QtAvPlayer::QtAvPlayer(QWidget *parent) : QOpenGLWidget(parent)
 {
@@ -39,8 +42,6 @@ void QtAvPlayer::play(const std::string &path)
 
     mPlayStatus = MediaPlaying;
 
-    // rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov
-
     auto func1 = std::bind(&QtAvPlayer::parse, this, std::placeholders::_1);
     std::thread th1(func1, path);
     th1.detach();
@@ -58,7 +59,7 @@ void QtAvPlayer::pause()
 {
     if (mPlayStatus != MediaPlaying) return;
     mPlayStatus = MediaPause;
-    mPauseTime = getCurrentMillisecond();
+    mPauseTime = getCurrentTime();
 }
 
 void QtAvPlayer::start()
@@ -71,8 +72,7 @@ void QtAvPlayer::start()
 void QtAvPlayer::seek(int32_t pts)
 {
     if (mParseStop) return;
-
-    mSeekPts = pts + (mVideoStartPts > 0 ? mVideoStartPts : 0);
+    mSeekPTS = pts + (mVideoStartPts > 0 ? mVideoStartPts : 0);
     mCvPause.notify_all();
 }
 
@@ -89,6 +89,16 @@ void QtAvPlayer::stop()
 {
     // 关闭播放，并初始化参数
     clear();
+}
+
+void QtAvPlayer::previous()
+{
+    mSeekPTS = mCurrentPTS - (mVideoDuration / 36);
+}
+
+void QtAvPlayer::next()
+{
+    mSeekPTS = mCurrentPTS + (mVideoDuration / 36);
 }
 
 void QtAvPlayer::initializeGL()
@@ -152,7 +162,11 @@ void QtAvPlayer::initializeGL()
 void QtAvPlayer::paintGL()
 {
     std::lock_guard<std::mutex> lock(mMutexVideoPlay);
-    if(!mDataY || !mDataU || !mDataV) return;
+    if((nullptr == mDataY) || (nullptr == mDataU) || (nullptr == mDataV))
+    {
+        qDebug() << "empty iamge data is get";
+        return;
+    }
 
     glViewport((this->width() - mVideoWidth) / 2.0, (this->height() - mVideoHeight) / 2.0, mVideoWidth, mVideoHeight);
 
@@ -218,12 +232,6 @@ void QtAvPlayer::resizeGL(int w, int h)
     mVideoHeight = heightSize;
 }
 
-void QtAvPlayer::mouseDoubleClickEvent(QMouseEvent *event)
-{
-    event->accept();
-    emit sgl_player_click();
-}
-
 void QtAvPlayer::slot_update_player()
 {
     update();
@@ -238,7 +246,7 @@ void QtAvPlayer::clear()
     mPauseTime = 0;
     mPauseTimeSpace = 0;
     mStartTime = 0;
-    mSeekPts = 0;
+    mSeekPTS = 0;
     mVideoStartPts = -1;
     mAudioStartPts = -1;
 
@@ -392,24 +400,24 @@ void QtAvPlayer::parse(const std::string& path)
     while (true)
     {
         std::unique_lock<std::mutex> lockStatus(mMutexPause);
-        mCvPause.wait(lockStatus, [this]{return (mPlayStatus == MediaPlaying ) || (mPlayStatus == MediaNone) || ((mSeekPts > 0) || mSeekVideo || mSeekAudio);});
+        mCvPause.wait(lockStatus, [this]{return (mPlayStatus == MediaPlaying ) || (mPlayStatus == MediaNone) || ((mSeekPTS > 0) || mSeekVideo || mSeekAudio);});
         lockStatus.unlock();
 
         if (mPlayStatus == MediaNone) break;
-        milliseconds = mSeekPts > 0 ? 0 : milliseconds;
+        milliseconds = mSeekPTS > 0 ? 0 : milliseconds;
         std::unique_lock<std::mutex> lock(mMutexParse);
         if(mCvParse.wait_for(lock, std::chrono::milliseconds(milliseconds)) == std::cv_status::timeout)
         {
-            if (mSeekPts > 0)
+            if (mSeekPTS > 0)
             {
                 // 重新开始播放前，清空已经读取的帧数据
                 avcodec_flush_buffers(codeCtxVideo);
                 avcodec_flush_buffers(codeCtxAudio);
                 avformat_flush(formatCtx);
 
-                av_seek_frame(formatCtx, videoStreamIndex, mSeekPts, AVSEEK_FLAG_BACKWARD);
+                av_seek_frame(formatCtx, videoStreamIndex, mSeekPTS, AVSEEK_FLAG_FRAME);
 
-                mSeekPts = 0;
+                mSeekPTS = 0;
 
                 mSeekVideo = true;
                 mSeekAudio = true;
@@ -446,24 +454,46 @@ void QtAvPlayer::parse(const std::string& path)
                     if (mVideoStartPts < 0) mVideoStartPts = frame->pts;
                     if (!headFrame)
                     {
-                        mPlayTime = getCurrentMillisecond();
+                        mPlayTime = getCurrentTime();
                         headFrame = true;
                     }
-                    if (nullptr == pSwsCtx) pSwsCtx = sws_getContext(codeCtxVideo->width, codeCtxVideo->height, (AVPixelFormat)frame->format, codeCtxVideo->width, codeCtxVideo->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, nullptr, nullptr, nullptr);
-                    int pixWidth = codeCtxVideo->width;
-                    int pixHeight = codeCtxVideo->height;
+
+                    int bufferLength = frame->linesize[0];
+
+                    if (nullptr == pSwsCtx) pSwsCtx = sws_getContext(bufferLength, codeCtxVideo->height, (AVPixelFormat)frame->format, bufferLength, codeCtxVideo->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+                    // ffmpeg 1498 x 720
+                    // memory 1536 x 768
+                    int pixWidth = bufferLength;
+                    int pixHeight = frame->height;
+
                     char *y = new char[pixWidth * pixHeight];
-                    char *u = new char[pixWidth * pixHeight / 2];
-                    char *v = new char[pixWidth * pixHeight / 2];
-                    uint8_t *data[AV_NUM_DATA_POINTERS] = { 0 };
-                    data[0] = (uint8_t *)y;
-                    data[1] = (uint8_t *)u;
-                    data[2] = (uint8_t *)v;
-                    int lines[AV_NUM_DATA_POINTERS] = { 0 };
-                    lines[0] = pixWidth;
-                    lines[1] = pixWidth / 2;
-                    lines[2] = pixWidth / 2;
-                    int ret = sws_scale(pSwsCtx, (uint8_t const * const *) frame->data, frame->linesize, 0, frame->height, data, lines);
+                    char *u = new char[pixWidth * pixHeight / 4];
+                    char *v = new char[pixWidth * pixHeight / 4];
+                    uint8_t *data[AV_NUM_DATA_POINTERS] = { (uint8_t *)y, (uint8_t *)u, (uint8_t *)v };
+                    int ret = sws_scale(pSwsCtx, (uint8_t const * const *) frame->data, frame->linesize, 0, frame->height, data, frame->linesize);
+
+                    // 清理多余像素 (涉及到内存对齐，不能任意裁剪像素)
+                    pixWidth = bufferLength - ((bufferLength - frame->width) / 16) * 16;
+                    pixHeight = frame->height;
+
+                    uint8_t *y1 = new uint8_t[pixWidth * pixHeight];
+                    uint8_t *u1 = new uint8_t[pixWidth * pixHeight / 4];
+                    uint8_t *v1 = new uint8_t[pixWidth * pixHeight / 4];
+
+                    for (int i = 0; i < pixHeight; i++)
+                    {
+                        memcpy(y1 + i * pixWidth, y + (i * frame->linesize[0]), pixWidth);
+                    }
+
+                    for (int i = 0; i < pixHeight / 2; i++)
+                    {
+                        memcpy(u1 + i * pixWidth / 2,   u + (i * frame->linesize[1]), pixWidth / 2);
+                        memcpy(v1 + i * pixWidth / 2,   v + (i * frame->linesize[2]), pixWidth / 2);
+                    }
+
+                    delete [] y; delete [] u; delete [] v;
+
                     if (ret > 0)
                     {
                         VideoFrame video =
@@ -474,22 +504,22 @@ void QtAvPlayer::parse(const std::string& path)
                             pixHeight,
                             pixWidth * pixHeight * sampleSize,
                             (double)codeCtxVideo->pkt_timebase.num / codeCtxVideo->pkt_timebase.den,
-                            data[0],
-                            data[1],
-                            data[2]
+                            y1,
+                            u1,
+                            v1
                         };
 
                         if (mSeekVideo)
                         {
                             mStartTime = (frame->pts - mVideoStartPts) * video.timebase * 1000;
-                            mPlayTime = getCurrentMillisecond();
+                            mPlayTime = getCurrentTime();
                             if (mPlayStatus == MediaPlaying)
                             {
                                 mPauseTime = 0;
                             }
                             else if (mPlayStatus == MediaPause)
                             {
-                                mPauseTime = getCurrentMillisecond();
+                                mPauseTime = getCurrentTime();
                             }
                             mPauseTimeSpace = 0;
                         }
@@ -539,7 +569,7 @@ void QtAvPlayer::parse(const std::string& path)
                     if (mAudioStartPts < 0) mAudioStartPts = frame->pts;
                     if (frame->pts == 0)
                     {
-                        mPlayTime = getCurrentMillisecond();
+                        mPlayTime = getCurrentTime();
                     }
 
                     auto swrCtx = swr_alloc_set_opts(nullptr, frame->channel_layout, AV_SAMPLE_FMT_FLT, codeCtxAudio->sample_rate, codeCtxAudio->channel_layout, codeCtxAudio->sample_fmt, codeCtxAudio->sample_rate, 0, nullptr);
@@ -611,7 +641,7 @@ void QtAvPlayer::playVideo()
         if (mQueueVideo.empty()) continue;
         mQueueVideo.wait_and_pop(frame);
 
-        int64_t currentTime = getCurrentMillisecond();
+        int64_t currentTime = getCurrentTime();
         int time = frame.pts * frame.timebase * 1000 - mStartTime;
         if (mPauseTime != 0 && mPlayStatus != MediaPause)
         {
@@ -637,6 +667,7 @@ void QtAvPlayer::playVideo()
         }
 
         std::unique_lock<std::mutex> lock(mMutexVideoPlay);
+
         if (nullptr != mDataY)
         {
             delete [] mDataY;
@@ -654,7 +685,6 @@ void QtAvPlayer::playVideo()
             delete [] mDataV;
             mDataV = nullptr;
         }
-        lock.unlock();
 
         mDataY = (uchar*)frame.y;
         mDataU = (uchar*)frame.u;
@@ -665,15 +695,18 @@ void QtAvPlayer::playVideo()
         mVideoOriginWidth = frame.width;
         mVideoOriginHeight = frame.height;
 
+        // 记录当前视频帧号
+        mCurrentPTS = frame.pts;
+
         // 只能调用 update， 使用 repaint 会导致 UI 压力增大，从而卡顿
         emit sgl_update_player();
 
-        if (!frame.seek && !mSeekVideo) emit sgl_media_process(frame.pts);
+        if (!frame.seek && !mSeekVideo) emit sgl_media_process_change(frame.pts);
     }
     mVideoPlayStop = true;
     mCvClose.notify_one();
 
-    emit sgl_media_process(mVideoDuration);
+    emit sgl_media_process_change(mVideoDuration);
     qDebug() << "play video over ";
 }
 
@@ -692,7 +725,7 @@ void QtAvPlayer::playAudio()
         if (mQueueAudio.empty()) continue;
         mQueueAudio.wait_and_pop(frame);
 
-        int64_t currentTime = getCurrentMillisecond();
+        int64_t currentTime = getCurrentTime();
         int time = frame.pts * frame.timebase * 1000 - mStartTime;
         if (mPauseTime != 0 && mPlayStatus != MediaPause)
         {
@@ -759,7 +792,7 @@ void QtAvPlayer::initAudio(int rate, int channels, int samplesize)
     mIODevice = mAudioOutput->start();
 }
 
-uint64_t QtAvPlayer::getCurrentMillisecond()
+uint64_t QtAvPlayer::getCurrentTime()
 {
-    return (double)std::chrono::system_clock::now().time_since_epoch().count() / std::chrono::system_clock::period::den * std::chrono::system_clock::period::num * 1000;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }

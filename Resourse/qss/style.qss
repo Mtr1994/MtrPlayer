@@ -14,7 +14,9 @@ QWidget[Background="true"]
 
 QWidget#widgetTitle
 {
-    max-height: 2em;
+    min-height: 2.0em;
+    max-height: 2.0em;
+    background-color: #fefefe;
     font: 10pt "微软雅黑";
 }
 
@@ -23,6 +25,12 @@ QWidget#widgetDynamicInfo
     border: 1px solid #000000;
     border-radius: 0.6em;
     background-color: #000000;
+}
+
+QWidget#widgetControl
+{
+    background-color: #1e1e1e;
+    border: none;
 }
 
 /* QLabel */
@@ -93,12 +101,9 @@ QPushButton[Cancel="true"]:!enabled
     background-color: #444444;
 }
 
-QPushButton[MenuButton="true"]
+QPushButton[MenuButton="true"]:hover
 {
-    min-height: 0.8em;
-    max-height: 0.8em;
-    min-width: 0.8em;
-    max-width: 0.8em;
+    background-color: red;
 }
 
 QPushButton[ControlButton="true"]
@@ -109,34 +114,117 @@ QPushButton[ControlButton="true"]
     max-width: 1.8em;
 }
 
-QPushButton#btnOpen
+QPushButton#btnPeriodText
 {
-    min-width: 16em;
-    min-height: 3.6em;
-    background-color: #5e78fd;
     border: none;
     color: #fefefe;
-    border-radius: 0.2em;
+    font-weight: bold;
+    font-size: 8pt;
+    background-color: #66439cf3;
+    border-radius: 0.80em;
+    min-width: 5.4em;
+    min-height: 1.64em;
 }
 
-QPushButton#btnOpen:hover
+QPushButton#btnPeriodText:hover
 {
-    background-color: #758bfb;
+    background-color: #99439cf3;
 }
 
-QPushButton#btnOpen:pressed
+QPushButton#btnPeriodText:pressed
 {
-    background-color: #5e78fd;
+    background-color: #55439cf3;
 }
 
-
-QPushButton#btnOpenVideos
+QPushButton#btnSpeedUp
 {
-    min-height: 3.2em;
-    background-color: #5e78fd;
     border: none;
     color: #fefefe;
-    border-radius: 0.2em;
+    font-weight: bold;
+    font-size: 8pt;
+    background-color: #66439cf3;
+    border-radius: 0.80em;
+    min-width: 5.4em;
+    min-height: 1.64em;
+}
+
+QPushButton#btnSpeedUp:hover
+{
+    background-color: #99439cf3;
+}
+
+QPushButton#btnSpeedUp:pressed
+{
+    background-color: #55439cf3;
+}
+
+QPushButton#btnPlay
+{
+    background-color: transparent;
+    image: url(:/Resourse/image/play.svg);
+    max-height: 2.4em;
+    max-width: 2.4em;
+    min-height: 2.4em;
+    min-width: 2.4em;
+    padding: 0.48em;
+    border-radius: 1.66em;
+}
+
+QPushButton#btnPlay:hover
+{
+    background-color: #11fefefe;
+}
+
+QPushButton#btnPlay:pressed
+{
+    background-color: #22fefefe;
+}
+
+QPushButton#btnPlay:checked
+{
+    image: url(:/Resourse/image/pause.svg);
+}
+
+QPushButton#btnPreviousFrame
+{
+    font-size: 9pt;
+    background-color: transparent;
+    image: url(:/Resourse/image/play_previous.svg);
+    max-height:  1.6em;
+    max-width:  1.6em;
+    padding: 0.48em;
+    border-radius: 1.26em;
+}
+
+QPushButton#btnPreviousFrame:hover
+{
+    background-color: #11fefefe;
+}
+
+QPushButton#btnPreviousFrame:pressed
+{
+    background-color: #22fefefe;
+}
+
+QPushButton#btnNextFrame
+{
+    font-size: 9pt;
+    background-color: transparent;
+    image: url(:/Resourse/image/play_next.svg);
+    max-height:  1.6em;
+    max-width:  1.6em;
+    padding: 0.48em;
+    border-radius: 1.26em;
+}
+
+QPushButton#btnNextFrame:hover
+{
+    background-color: #11fefefe;
+}
+
+QPushButton#btnNextFrame:pressed
+{
+    background-color: #22fefefe;
 }
 
 /* QLineEdit */
@@ -162,7 +250,7 @@ QLineEdit:focus
 QSlider
 {
     border: none;
-    min-height: 1.2em;
+    height: 8px;
     min-width: 4.8em;
     background-color: transparent;
 }
@@ -170,7 +258,7 @@ QSlider
 QSlider::groove:horizontal
 {
     border: none;
-    height: 0.24em;
+    height: 2px;
     border-radius: 0.12em;
     margin: 0px 0px;
     left: 0.5em;
@@ -181,18 +269,18 @@ QSlider::handle:horizontal
 {
     border: none;
     background-color: #fefefe;
-    width: 1.2em;
-    margin: -0.48em;
-    border-radius: 0.6em;
+    width: 8px;
+    margin: -3px;
+    border-radius: 4px;
 }
 
 QSlider::handle:horizontal[sliderVolume="true"]
 {
     border: none;
     background-color: #fefefe;
-    width: 1.0em;
-    margin: -0.38em;
-    border-radius: 0.48em;
+    width: 8px;
+    margin: -3px;
+    border-radius: 4px;
 }
 
 QSlider::add-page:horizontal
@@ -205,4 +293,76 @@ QSlider::sub-page:horizontal
 {
     border-radius: 0.12em;
     background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 #439cf3, stop:0.25 #439cf3, stop:0.5 #439cf3, stop:1 #439cf3);
+}
+
+/* QComboBox */
+QComboBox
+{
+    min-width: 4em;
+    padding-left: 0.9em;
+    min-height: 1.8em;
+    border: none;
+    border-radius: 0.2em;
+    background-color: transparent;
+    color: #85927e;
+}
+
+QComboBox QAbstractItemView
+{
+    outline: 0px solid gray;
+    border: 1px solid #dcdfe6;
+    background-color: #fefefe;
+}
+
+QComboBox::drop-down
+{
+    width: 0px;
+}
+
+QComboBox QAbstractItemView::item
+{
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+}
+
+QComboBox QAbstractItemView::item:hover
+{
+    color: rgb(48, 49, 51);
+    background-color: #f5f7fa;
+}
+
+QComboBox QAbstractItemView::item:selected
+{
+    color: rgb(48, 49, 51);
+    background-color: #f5f7fa;
+}
+
+/* QMenu */
+QMenu
+{
+    background-color: #ffffff;
+    border:1px solid #fefefe;
+}
+
+QMenu::item
+{
+    min-width: 6em;
+    min-height: 1.6em;
+    background: #ffffff;
+    border: 1px solid transparent;
+    padding: 1px 1em;
+}
+QMenu::item:selected
+{
+    background: #f0f0f0;
+    border:1px solid transparent;
+}
+QMenu::item:!enabled
+{
+    color: #dddddd;
+}
+QMenu::item:pressed
+{
+    background: #f3f3f3;
+    border:1px solid transparent;
 }

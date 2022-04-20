@@ -24,20 +24,23 @@ QMAKE_TARGET_COPYRIGHT = mtr company Co., Ltd
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+DEFINES += QT_NO_DEBUG_OUTPUT
+
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-INCLUDEPATH += E:\project\ffmpeg\install\include
-DESTDIR = ../bin
+INCLUDEPATH += $$PWD/Sdk/Windows/include
+DESTDIR = ../output
 
 SOURCES += \
     Player/qtavplayer.cpp \
     Public/appsignal.cpp \
     Public/button.cpp \
     Public/card.cpp \
-    Public/widgetmediacontrol.cpp \
+    Widget/buttondesigned.cpp \
+    Widget/widgetmediacontrol.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -47,11 +50,12 @@ HEADERS += \
     Public/button.h \
     Public/card.h \
     Public/threadsafequeue.h \
-    Public/widgetmediacontrol.h \
+    Widget/buttondesigned.h \
+    Widget/widgetmediacontrol.h \
     mainwindow.h
 
 FORMS += \
-    Public/widgetmediacontrol.ui \
+    Widget/widgetmediacontrol.ui \
     mainwindow.ui
 
 TRANSLATIONS += \
@@ -70,7 +74,7 @@ RESOURCES += \
 #0x0800代表和系统当前语言一致
 RC_LANG = 0x0800
 
-LIBS += -LE:\project\ffmpeg\install\bin \
+LIBS += -L$$PWD/Sdk/Windows/lib \
 -lavformat \
 -lavcodec \
 -lavdevice \

@@ -49,17 +49,17 @@ public:
     void seek(int32_t pts);
     void setVolume(float volume);
     void stop();
+    void previous();
+    void next();
 
 signals:
     void sgl_update_player();
-    void sgl_player_click();
-    void sgl_media_process(int64_t pts); // 播放进度（当前 pts）
+    void sgl_media_process_change(int64_t pts); // 播放进度（当前 pts）
 
 protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int w, int h);
-    void mouseDoubleClickEvent(QMouseEvent *event);
 
 private slots:
     void slot_update_player();
@@ -73,7 +73,7 @@ private:
 
     void initAudio(int rate, int channels, int samplesize);
 
-    uint64_t getCurrentMillisecond();
+    uint64_t getCurrentTime();
 
 private:
     std::mutex mMutexParse;
@@ -86,6 +86,7 @@ private:
     std::condition_variable mCvClose;
 
     std::mutex mMutexVideoPlay;
+
     ThreadSafeQueue<VideoFrame> mQueueVideo;
     ThreadSafeQueue<AudioFrame> mQueueAudio;
 
@@ -95,7 +96,7 @@ private:
     int mVideoHeight;
 
     QAudioOutput* mAudioOutput = nullptr;
-    float mVolume = 0;
+    qreal mVolume = 0.36;
     QIODevice* mIODevice = nullptr;
 
     uint8_t* mDataY = nullptr;
@@ -116,9 +117,10 @@ private:
 
     int mPlayStatus = MediaNone;
 
-    int32_t mSeekPts = 0;
+    int32_t mSeekPTS = 0;
     bool mSeekVideo = false;
     bool mSeekAudio = false;
+    int32_t mCurrentPTS = 0;
 
     // 视频总的帧数
     int32_t mVideoDuration = 0;

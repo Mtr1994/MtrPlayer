@@ -22,27 +22,24 @@ public:
     void init();
 
 public slots:
-    void slot_media_pause();
-    void slot_media_start();
-    void slot_media_seek(int64_t pts);
-    void slot_change_volume(float volume);
-    void slot_stop_media();
+    void slot_triggre_action_pause();
+    void slot_triggre_action_play();
+    void slot_triggre_action_seek(int64_t pts);
+    void slot_triggre_action_change_volume(float volume);
+    void slot_trigger_action_previous_frame();
+    void slot_trigger_action_next_frame();
 
 protected:
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
 
-    void resizeEvent(QResizeEvent *event);
-    void showEvent(QShowEvent *event);
-
 private slots:
-    void slot_btnClose_clicked();
-    void slot_exchange_palyer();
+    void slot_button_close_clicked();
+
     void slot_open_file();
 
-private:
-    void locatePlayer();
+    void slot_custom_context_menu_requested(const QPoint &pos);
 
 private:
     Ui::MainWindow *ui;
