@@ -609,7 +609,8 @@ void QtAvPlayer::parse(const std::string& path)
             }
             else
             {
-                printf("other stream\n");
+                qDebug() << "other stream";
+                milliseconds = 0;
             }
         }
     }
